@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#4F6F52">
+<link rel="manifest" href="manifest.json">
+<title>Lagoa da Prata</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f6f7f4;color:#263126}
+header{background:#4F6F52;color:white;padding:20px 16px 18px;border-radius:0 0 24px 24px}
+h1{font-size:23px;margin:0 0 4px}small{opacity:.9}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:16px}
+.card{background:white;border-radius:18px;padding:16px;box-shadow:0 2px 10px #00000012}.big{font-size:22px;font-weight:700;margin-top:8px}
+button{width:100%;border:0;border-radius:14px;padding:14px;background:#4F6F52;color:white;font-size:16px;font-weight:700}
+.btn2{background:#D9B44A;color:#263126}.section{padding:0 16px 16px}.section h2{font-size:18px}
+form{background:white;padding:16px;border-radius:18px;box-shadow:0 2px 10px #00000012}
+label{display:block;font-size:13px;font-weight:700;margin:10px 0 5px}input,select{width:100%;padding:12px;border:1px solid #ddd;border-radius:10px;font-size:16px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.hidden{display:none}.item{padding:12px 0;border-bottom:1px solid #eee}.danger{color:#b3261e}.warn{color:#8a6500}
+nav{position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid #ddd;display:flex;justify-content:space-around;padding:8px}
+nav button{background:white;color:#4F6F52;padding:9px;font-size:12px}
+main{padding-bottom:80px}
+</style></head>
+<body>
+<header><h1>🌾 Fazenda Lagoa da Prata</h1><small>Controle rural</small></header>
+<main id="app">
+<section class="grid">
+<div class="card">💰 Gastos<div class="big" id="totalGastos">R$ 0,00</div></div>
+<div class="card">🧾 Boletos<div class="big" id="totalBoletos">R$ 0,00</div></div>
+<div class="card">🐂 Cabeças<div class="big" id="cabecas">0</div></div>
+<div class="card">🔔 Próximos<div class="big" id="proximos">0</div></div>
+</section>
+<section class="section">
+<div class="row"><button onclick="show('gasto')">➕ Lançar gasto</button><button class="btn2" onclick="show('boleto')">🧾 Novo boleto</button></div>
+</section>
+<section id="home" class="section">
+<h2>Últimos lançamentos</h2><div id="lista"></div>
+</section>
+<section id="gasto" class="section hidden">
+<h2>➕ Novo gasto</h2>
+<form onsubmit="addGasto(event)">
+<label>Categoria</label><select id="cat"><option>Combustível</option><option>Sal</option><option>Ração</option><option>Milho</option><option>Peças</option><option>Salários</option><option>Honorários</option><option>Extras</option><option>Outros</option></select>
+<label>Descrição</label><input id="desc" required>
+<div class="row"><div><label>Valor (R$)</label><input id="valor" type="number" step="0.01" required></div><div><label>Data</label><input id="data" type="date" required></div></div>
+<label>Fornecedor</label><input id="forn">
+<br><br><button>Salvar gasto</button>
+</form></section>
+<section id="boleto" class="section hidden">
+<h2>🧾 Novo boleto</h2>
+<form onsubmit="addBoleto(event)">
+<label>Fornecedor</label><input id="bf" required><label>Descrição</label><input id="bd" required>
+<div class="row"><div><label>Valor</label><input id="bv" type="number" step="0.01" required></div><div><label>Vencimento</label><input id="bdate" type="date" required></div></div>
+<br><br><button>Salvar boleto</button>
+</form></section>
+<section id="avisos" class="section hidden"><h2>🔔 Avisos de boletos</h2><div id="avisosLista"></div></section>
+</main>
+<nav><button onclick="show('home')">🏠 Início</button><button onclick="show('gasto')">💰 Gastos</button><button onclick="show('boleto')">🧾 Boletos</button><button onclick="show('avisos')">🔔 Avisos</button></nav>
+<script>
+const K='lagoa_app_v1';
+let db=JSON.parse(localStorage.getItem(K)||'{"gastos":[],"boletos":[],"cabecas":0}');
+const brl=v=>Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+function save(){localStorage.setItem(K,JSON.stringify(db));render()}
+function show(id){document.querySelectorAll('main section').forEach(x=>x.classList.add('hidden'));document.getElementById(id).classList.remove('hidden');if(id==='home')render()}
+function addGasto(e){e.preventDefault();db.gastos.push({cat:cat.value,desc:desc.value,valor:+valor.value,data:data.value,forn:forn.value});e.target.reset();save();show('home')}
+function addBoleto(e){e.preventDefault();db.boletos.push({forn:bf.value,desc:bd.value,valor:+bv.value,data:bdate.value,status:'Em aberto'});e.target.reset();save();show('home')}
+function render(){
+let tg=db.gastos.reduce((a,x)=>a+x.valor,0), tb=db.boletos.filter(x=>x.status==='Em aberto').reduce((a,x)=>a+x.valor,0);
+document.getElementById('totalGastos').textContent=brl(tg);document.getElementById('totalBoletos').textContent=brl(tb);document.getElementById('cabecas').textContent=db.cabecas;
+let now=new Date(),soon=db.boletos.filter(x=>x.status==='Em aberto' && new Date(x.data+'T23:59:59')-now<=7*864e5 && new Date(x.data+'T23:59:59')>=now).length;
+document.getElementById('proximos').textContent=soon;
+document.getElementById('lista').innerHTML=[...db.gastos].slice(-8).reverse().map(x=>`<div class="item"><b>${x.cat}</b> — ${x.desc}<br>${brl(x.valor)} <small>${x.data||''}</small></div>`).join('')||'<p>Nenhum gasto lançado ainda.</p>';
+document.getElementById('avisosLista').innerHTML=db.boletos.map(x=>{let d=Math.ceil((new Date(x.data+'T23:59:59')-now)/864e5);let cls=d<0?'danger':d<=7?'warn':'';return `<div class="item ${cls}"><b>${x.forn}</b> — ${x.desc}<br>${brl(x.valor)} · vencimento ${x.data} · ${d<0?'Vencido':d===0?'vence hoje':'vence em '+d+' dias'}</div>`}).join('')||'<p>Nenhum boleto cadastrado.</p>';
+}
+document.getElementById('data').value=new Date().toISOString().slice(0,10);render();
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+</script>
+</body></html>
