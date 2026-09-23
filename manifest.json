@@ -1,10 +1,1 @@
-{
-  "name": "Fazenda Lagoa da Prata",
-  "short_name": "Lagoa da Prata",
-  "start_url": "./",
-  "display": "standalone",
-  "background_color": "#f6f7f4",
-  "theme_color": "#4F6F52",
-  "lang": "pt-BR",
-  "icons": []
-}
+{"name": "Fazenda Lagoa da Prata", "short_name": "Lagoa da Prata", "start_url": "./", "display": "standalone", "background_color": "#f4f1e8", "theme_color": "#244b2f", "lang": "pt-BR"}
